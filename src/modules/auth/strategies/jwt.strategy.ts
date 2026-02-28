@@ -17,13 +17,16 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: { sub: string; email: string }) {
+  async validate(payload: { sub: string; email: string; role: string }) {
     const user = await this.userRepository.findOne({
       id: payload.sub,
       email: payload.email,
     });
     if (!user) {
       throw new UnauthorizedException();
+    }
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account is deactivated');
     }
     return user;
   }

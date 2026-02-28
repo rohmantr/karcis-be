@@ -10,3 +10,8 @@ export enum BookingStatus {
   CANCELLED = 'CANCELLED',
   EXPIRED = 'EXPIRED',
 }
+
+export enum UserRole {
+  USER = 'USER',
+  ADMIN = 'ADMIN',
+}
