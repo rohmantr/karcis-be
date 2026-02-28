@@ -2,5 +2,7 @@ import { EntityRepository } from '@mikro-orm/postgresql';
 import { User } from '../entities/user.entity';
 
 export class UserRepository extends EntityRepository<User> {
-  // Custom repository methods for User go here
+  async findByEmail(email: string): Promise<User | null> {
+    return this.findOne({ email });
+  }
 }

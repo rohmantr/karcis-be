@@ -15,6 +15,15 @@ export class User extends BaseEntity {
   @Property({ unique: true })
   email!: string;
 
+  @Property({ hidden: true })
+  password!: string;
+
+  @Property({ nullable: true })
+  refreshToken?: string;
+
+  @Property({ nullable: true })
+  refreshTokenExpiresAt?: Date;
+
   @OneToMany(() => Booking, (booking) => booking.user)
   bookings = new Collection<Booking>(this);
 }

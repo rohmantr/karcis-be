@@ -1,0 +1,73 @@
+
+> karcis-backend@0.0.1 lint
+> eslint "{src,apps,libs,test}/**/*.ts" --fix
+
+
+/home/x3nonxe/Project/ts/karcis/karcis-backend/src/modules/auth/services/auth.service.ts
+   12:11  error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+   14:64  error  Unsafe argument of type error typed assigned to a parameter of type `string`      @typescript-eslint/no-unsafe-argument
+   16:13  error  Unsafe construction of a type that could not be resolved                          @typescript-eslint/no-unsafe-call
+   19:11  error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+   19:34  error  Unsafe call of a type that could not be resolved                                  @typescript-eslint/no-unsafe-call
+   19:41  error  Unsafe member access .hash on a type that cannot be resolved                      @typescript-eslint/no-unsafe-member-access
+   21:7   error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+   22:7   error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+   32:11  error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+   33:56  error  Unsafe argument of type error typed assigned to a parameter of type `string`      @typescript-eslint/no-unsafe-argument
+   35:13  error  Unsafe construction of a type that could not be resolved                          @typescript-eslint/no-unsafe-call
+   37:11  error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+   37:35  error  Unsafe call of a type that could not be resolved                                  @typescript-eslint/no-unsafe-call
+   37:42  error  Unsafe member access .compare on a type that cannot be resolved                   @typescript-eslint/no-unsafe-member-access
+   39:13  error  Unsafe construction of a type that could not be resolved                          @typescript-eslint/no-unsafe-call
+   42:11  error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+   42:26  error  Unsafe call of a type that could not be resolved                                  @typescript-eslint/no-unsafe-call
+   44:5   error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+   44:32  error  Unsafe member access .refreshToken on a type that cannot be resolved              @typescript-eslint/no-unsafe-member-access
+   47:5   error  Unsafe return of a value of type error                                            @typescript-eslint/no-unsafe-return
+   51:11  error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+   54:13  error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+   54:29  error  Unsafe call of a type that could not be resolved                                  @typescript-eslint/no-unsafe-call
+   54:45  error  Unsafe member access .verify on a type that cannot be resolved                    @typescript-eslint/no-unsafe-member-access
+   59:9   error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+   59:21  error  Unsafe member access .sub on a type that cannot be resolved                       @typescript-eslint/no-unsafe-member-access
+   60:9   error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+   63:15  error  Unsafe construction of a type that could not be resolved                          @typescript-eslint/no-unsafe-call
+   66:13  error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+   66:28  error  Unsafe call of a type that could not be resolved                                  @typescript-eslint/no-unsafe-call
+   68:7   error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+   68:34  error  Unsafe member access .refreshToken on a type that cannot be resolved              @typescript-eslint/no-unsafe-member-access
+   73:7   error  Unsafe return of a value of type error                                            @typescript-eslint/no-unsafe-return
+   74:14  error  'error' is defined but never used. Allowed unused caught errors must match /^_/u  @typescript-eslint/no-unused-vars
+   75:13  error  Unsafe construction of a type that could not be resolved                          @typescript-eslint/no-unsafe-call
+   91:3   error  Async method 'generateTokens' has no 'await' expression                           @typescript-eslint/require-await
+   94:11  error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+   94:25  error  Unsafe call of a type that could not be resolved                                  @typescript-eslint/no-unsafe-call
+   94:41  error  Unsafe member access .sign on a type that cannot be resolved                      @typescript-eslint/no-unsafe-member-access
+   99:11  error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+   99:26  error  Unsafe call of a type that could not be resolved                                  @typescript-eslint/no-unsafe-call
+   99:42  error  Unsafe member access .sign on a type that cannot be resolved                      @typescript-eslint/no-unsafe-member-access
+  104:14  error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+  104:27  error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+
+/home/x3nonxe/Project/ts/karcis/karcis-backend/src/modules/users/controller/users.controller.ts
+  20:5   error  Unsafe return of a value of type error            @typescript-eslint/no-unsafe-return
+  20:12  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+  25:5   error  Unsafe return of a value of type error            @typescript-eslint/no-unsafe-return
+  25:12  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+  30:5   error  Unsafe return of a value of type error            @typescript-eslint/no-unsafe-return
+  30:12  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+  35:5   error  Unsafe return of a value of type error            @typescript-eslint/no-unsafe-return
+  35:12  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+  40:5   error  Unsafe return of a value of type error            @typescript-eslint/no-unsafe-return
+  40:12  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+
+/home/x3nonxe/Project/ts/karcis/karcis-backend/src/modules/users/services/users.service.ts
+  15:10  error  Expected non-Promise value in a boolean conditional  @typescript-eslint/no-misused-promises
+
+/home/x3nonxe/Project/ts/karcis/karcis-backend/src/modules/users/users.module.ts
+  14:42  error  Unsafe return of a value of type error                                 @typescript-eslint/no-unsafe-return
+  14:42  error  Unsafe call of a type that could not be resolved                       @typescript-eslint/no-unsafe-call
+  14:45  error  Unsafe member access .getRepository on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+
+✖ 58 problems (58 errors, 0 warnings)
+

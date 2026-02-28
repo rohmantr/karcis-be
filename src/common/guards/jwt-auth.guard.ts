@@ -3,11 +3,11 @@ import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-  handleRequest<TUser = unknown>(
-    err: unknown,
-    user: unknown,
-    _info: unknown,
-  ): TUser {
+  handleRequest(
+    err,
+    user,
+    info,
+  ) {
     if (err || !user) {
       throw err instanceof Error
         ? err
@@ -15,6 +15,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
             'Authentication token is missing or invalid',
           );
     }
-    return user as TUser;
+    return user;
   }
 }
