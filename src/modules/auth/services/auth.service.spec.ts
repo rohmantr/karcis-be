@@ -1,222 +1,275 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
-import { UserRepository } from '../../users/repositories/user.repository';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import {
+  ConflictException,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { User } from '../../users/entities/user.entity';
+import { RefreshToken } from '../entities/refresh-token.entity';
+import { UserRole } from '../../../common/entities/enums';
+import { EntityManager } from '@mikro-orm/postgresql';
+import { TokenHelper } from '../../../common/helpers/token.helper';
+import { PasswordHelper } from '../../../common/helpers/password.helper';
 
-jest.mock('bcrypt', () => ({
-  hash: jest.fn(),
-  compare: jest.fn(),
-}));
+jest.mock('@mikro-orm/core', () => {
+  const actual = jest.requireActual('@mikro-orm/core');
+  return {
+    ...actual,
+    CreateRequestContext:
+      () => (_target: unknown, _key: string, descriptor: PropertyDescriptor) =>
+        descriptor,
+  };
+});
 
 describe('AuthService', () => {
   let service: AuthService;
-  let userRepository: Record<string, jest.Mock>;
-  let jwtService: Record<string, jest.Mock>;
+  let userRepo: Record<string, jest.Mock>;
+  let refreshRepo: Record<string, jest.Mock>;
+  let mockEm: Record<string, jest.Mock>;
+  let tokenHelper: Record<string, jest.Mock>;
+  let passwordHelper: Record<string, jest.Mock>;
 
-  const mockUser = {
-    id: 'test-id',
-    email: 'test@example.com',
-    password: 'hashed-password',
-    refreshToken: 'old-refresh-token',
-    refreshTokenExpiresAt: new Date(Date.now() + 100000),
+  const activeUser = {
+    id: 'u-1',
+    name: 'Active User',
+    email: 'active@test.com',
+    passwordHash: 'hashed',
+    role: UserRole.USER,
+    isActive: true,
   } as User;
 
+  const inactiveUser = {
+    ...activeUser,
+    id: 'u-2',
+    isActive: false,
+  } as unknown as User;
+
   beforeEach(async () => {
-    userRepository = {
+    userRepo = {
       findByEmail: jest.fn(),
-      findOne: jest.fn(),
-      create: jest
-        .fn()
-        .mockImplementation((dto) => ({ ...dto, id: 'test-id' })),
-      getEntityManager: jest.fn().mockReturnValue({
-        persistAndFlush: jest.fn(),
-        flush: jest.fn(),
-      }),
+      create: jest.fn().mockImplementation((dto) => ({ ...dto, id: 'u-1' })),
     };
 
-    jwtService = {
-      sign: jest.fn(),
-      verifyAsync: jest.fn(),
+    refreshRepo = {
+      create: jest.fn().mockImplementation((dto) => ({ ...dto, id: 'rt-1' })),
+      findValidByTokenHash: jest.fn(),
+      revokeAllByUserId: jest.fn().mockResolvedValue(1),
+      revokeByTokenHash: jest.fn(),
+    };
+
+    mockEm = {
+      getRepository: jest.fn((entity) => {
+        if (entity === User) return userRepo;
+        if (entity === RefreshToken) return refreshRepo;
+        return {};
+      }),
+      persistAndFlush: jest.fn(),
+    };
+
+    tokenHelper = {
+      generateTokenPair: jest.fn().mockReturnValue({
+        accessToken: 'at',
+        refreshToken: 'rt',
+      }),
+      verifyRefreshToken: jest.fn(),
+      hashToken: jest.fn().mockReturnValue('hashed-token'),
+      getRefreshTokenExpiry: jest.fn().mockReturnValue(new Date('2026-03-08')),
+    };
+
+    passwordHelper = {
+      hash: jest.fn().mockResolvedValue('hashed-pw'),
+      compare: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
-        { provide: 'UserRepository', useValue: userRepository },
-        { provide: JwtService, useValue: jwtService },
-        {
-          provide: ConfigService,
-          useValue: {
-            get: jest.fn().mockImplementation((key: string) => {
-              if (key === 'JWT_ACCESS_SECRET') return 'access-secret';
-              if (key === 'JWT_REFRESH_SECRET') return 'refresh-secret';
-              if (key === 'JWT_ACCESS_EXPIRES_IN') return '15m';
-              if (key === 'JWT_REFRESH_EXPIRES_IN') return '7d';
-              return null;
-            }),
-          },
-        },
+        { provide: EntityManager, useValue: mockEm },
+        { provide: TokenHelper, useValue: tokenHelper },
+        { provide: PasswordHelper, useValue: passwordHelper },
       ],
     }).compile();
 
-    service = module.get<AuthService>(AuthService);
+    service = module.get(AuthService);
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  afterEach(() => jest.clearAllMocks());
+
+  // ── register ────────────────────────────────────────────
 
   describe('register', () => {
-    it('should throw ConflictException if user already exists', async () => {
-      userRepository.findByEmail.mockResolvedValue(mockUser);
+    it('rejects duplicate email', async () => {
+      userRepo.findByEmail.mockResolvedValue(activeUser);
 
       await expect(
         service.register({
-          email: 'test@example.com',
-          password: 'password123',
+          name: 'X',
+          email: 'active@test.com',
+          password: 'Abc123!@',
         }),
       ).rejects.toThrow(ConflictException);
     });
 
-    it('should successfully register a new user', async () => {
-      userRepository.findByEmail.mockResolvedValue(null);
-      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
+    it('creates user with hashed password via PasswordHelper', async () => {
+      userRepo.findByEmail.mockResolvedValue(null);
 
       const result = await service.register({
-        email: 'new@example.com',
-        password: 'password123',
+        name: 'New',
+        email: 'new@test.com',
+        phone: '08123',
+        password: 'Abc123!@',
       });
 
-      expect(userRepository.create).toHaveBeenCalledWith(
+      expect(passwordHelper.hash).toHaveBeenCalledWith('Abc123!@');
+      expect(userRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          email: 'new@example.com',
-          password: 'hashed-password',
+          name: 'New',
+          passwordHash: 'hashed-pw',
+          role: UserRole.USER,
         }),
       );
-      expect(
-        userRepository.getEntityManager().persistAndFlush,
-      ).toHaveBeenCalled();
-      expect(result).toEqual({ id: 'test-id', email: 'new@example.com' });
+      expect(mockEm.persistAndFlush).toHaveBeenCalled();
+      expect(result).toEqual({ id: 'u-1', email: 'new@test.com', name: 'New' });
     });
   });
+
+  // ── login ───────────────────────────────────────────────
 
   describe('login', () => {
-    it('should throw UnauthorizedException if user not found', async () => {
-      userRepository.findByEmail.mockResolvedValue(null);
+    it('rejects unknown email', async () => {
+      userRepo.findByEmail.mockResolvedValue(null);
 
       await expect(
-        service.login({ email: 'test@example.com', password: 'password' }),
+        service.login({ email: 'x@x.com', password: 'pw' }),
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('should throw UnauthorizedException if password is invalid', async () => {
-      userRepository.findByEmail.mockResolvedValue(mockUser);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+    it('rejects inactive user', async () => {
+      userRepo.findByEmail.mockResolvedValue(inactiveUser);
 
       await expect(
-        service.login({
-          email: 'test@example.com',
-          password: 'wrong-password',
-        }),
+        service.login({ email: 'x@x.com', password: 'pw' }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('rejects wrong password', async () => {
+      userRepo.findByEmail.mockResolvedValue(activeUser);
+      passwordHelper.compare.mockResolvedValue(false);
+
+      await expect(
+        service.login({ email: 'x@x.com', password: 'bad' }),
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('should return tokens on successful login', async () => {
-      userRepository.findByEmail.mockResolvedValue(mockUser);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
-      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-refresh-token');
-      jwtService.sign
-        .mockReturnValueOnce('access-token')
-        .mockReturnValueOnce('refresh-token');
+    it('returns tokens and persists refresh token record', async () => {
+      userRepo.findByEmail.mockResolvedValue(activeUser);
+      passwordHelper.compare.mockResolvedValue(true);
 
-      const result = await service.login({
-        email: 'test@example.com',
-        password: 'password123',
-      });
-
-      expect(result).toEqual({
-        accessToken: 'access-token',
-        refreshToken: 'refresh-token',
-      });
-      expect(
-        userRepository.getEntityManager().persistAndFlush,
-      ).toHaveBeenCalledWith(
-        expect.objectContaining({ refreshToken: 'hashed-refresh-token' }),
+      const result = await service.login(
+        { email: 'active@test.com', password: 'pw' },
+        'UA',
+        '1.2.3.4',
       );
+
+      expect(result).toEqual({ accessToken: 'at', refreshToken: 'rt' });
+      expect(tokenHelper.generateTokenPair).toHaveBeenCalledWith(activeUser);
+      expect(tokenHelper.hashToken).toHaveBeenCalledWith('rt');
+      expect(refreshRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user: activeUser,
+          tokenHash: 'hashed-token',
+          deviceInfo: 'UA',
+          ipAddress: '1.2.3.4',
+        }),
+      );
+      expect(mockEm.persistAndFlush).toHaveBeenCalled();
     });
   });
+
+  // ── refreshToken ────────────────────────────────────────
 
   describe('refreshToken', () => {
-    it('should throw UnauthorizedException if token verification fails', async () => {
-      jwtService.verifyAsync.mockRejectedValue(new Error('Invalid token'));
+    it('rejects invalid JWT', async () => {
+      tokenHelper.verifyRefreshToken.mockRejectedValue(new Error('bad'));
 
       await expect(
-        service.refreshToken({ refreshToken: 'invalid-token' }),
+        service.refreshToken({ refreshToken: 'bad-jwt' }),
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('should throw UnauthorizedException if user not found', async () => {
-      jwtService.verifyAsync.mockResolvedValue({
-        sub: 'test-id',
-        email: 'test@example.com',
-      });
-      userRepository.findOne.mockResolvedValue(null);
+    it('revokes all sessions on token reuse', async () => {
+      tokenHelper.verifyRefreshToken.mockResolvedValue({ sub: 'u-1' });
+      refreshRepo.findValidByTokenHash.mockResolvedValue(null);
 
       await expect(
-        service.refreshToken({ refreshToken: 'valid-token' }),
+        service.refreshToken({ refreshToken: 'reused' }),
       ).rejects.toThrow(UnauthorizedException);
+      expect(refreshRepo.revokeAllByUserId).toHaveBeenCalledWith('u-1');
     });
 
-    it('should return new tokens on successful refresh', async () => {
-      jwtService.verifyAsync.mockResolvedValue({
-        sub: 'test-id',
-        email: 'test@example.com',
-      });
-      userRepository.findOne.mockResolvedValue(mockUser);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
-      (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed-refresh-token');
-      jwtService.sign
-        .mockReturnValueOnce('new-access-token')
-        .mockReturnValueOnce('new-refresh-token');
-
-      const result = await service.refreshToken({
-        refreshToken: 'valid-token',
+    it('rejects inactive user during refresh', async () => {
+      tokenHelper.verifyRefreshToken.mockResolvedValue({ sub: 'u-2' });
+      refreshRepo.findValidByTokenHash.mockResolvedValue({
+        id: 'rt-old',
+        user: inactiveUser,
       });
 
-      expect(result).toEqual({
-        accessToken: 'new-access-token',
-        refreshToken: 'new-refresh-token',
+      await expect(
+        service.refreshToken({ refreshToken: 'valid-jwt' }),
+      ).rejects.toThrow(ForbiddenException);
+      expect(refreshRepo.revokeAllByUserId).toHaveBeenCalledWith('u-2');
+    });
+
+    it('rotates tokens and revokes old hash', async () => {
+      tokenHelper.verifyRefreshToken.mockResolvedValue({ sub: 'u-1' });
+      refreshRepo.findValidByTokenHash.mockResolvedValue({
+        id: 'rt-old',
+        user: activeUser,
       });
-      expect(
-        userRepository.getEntityManager().persistAndFlush,
-      ).toHaveBeenCalledWith(
-        expect.objectContaining({ refreshToken: 'new-hashed-refresh-token' }),
+
+      const result = await service.refreshToken({ refreshToken: 'old-jwt' });
+
+      expect(result).toEqual({ accessToken: 'at', refreshToken: 'rt' });
+      expect(refreshRepo.revokeByTokenHash).toHaveBeenCalled();
+      expect(refreshRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ user: activeUser }),
       );
+      expect(mockEm.persistAndFlush).toHaveBeenCalled();
     });
   });
 
+  // ── logout ──────────────────────────────────────────────
+
   describe('logout', () => {
-    it('should clear refresh token on logout', async () => {
-      userRepository.findOne.mockResolvedValue(mockUser);
+    it('revokes specific token when provided', async () => {
+      const result = await service.logout('u-1', 'some-token');
 
-      const result = await service.logout('test-id');
-
-      expect(mockUser.refreshToken).toBeUndefined();
-      expect(mockUser.refreshTokenExpiresAt).toBeUndefined();
-      expect(userRepository.getEntityManager().flush).toHaveBeenCalled();
+      expect(tokenHelper.hashToken).toHaveBeenCalledWith('some-token');
+      expect(refreshRepo.revokeByTokenHash).toHaveBeenCalledWith(
+        'hashed-token',
+      );
       expect(result).toEqual({ message: 'Logout successful' });
     });
 
-    it('should return success even if user not found', async () => {
-      userRepository.findOne.mockResolvedValue(null);
+    it('revokes all sessions when no token provided', async () => {
+      const result = await service.logout('u-1');
 
-      const result = await service.logout('test-id');
-
+      expect(refreshRepo.revokeAllByUserId).toHaveBeenCalledWith('u-1');
       expect(result).toEqual({ message: 'Logout successful' });
+    });
+  });
+
+  // ── revokeAllSessions ───────────────────────────────────
+
+  describe('revokeAllSessions', () => {
+    it('revokes all refresh tokens for user', async () => {
+      refreshRepo.revokeAllByUserId.mockResolvedValue(3);
+
+      const result = await service.revokeAllSessions('u-1');
+
+      expect(refreshRepo.revokeAllByUserId).toHaveBeenCalledWith('u-1');
+      expect(result).toBe(3);
     });
   });
 });

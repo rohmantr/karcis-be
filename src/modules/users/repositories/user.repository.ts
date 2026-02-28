@@ -10,7 +10,16 @@ export class UserRepository extends EntityRepository<User> {
   async findAllPaginated(query: FindAllUsersDto) {
     const { limit, offset, email } = query;
     const qb = this.createQueryBuilder('u')
-      .select(['id', 'email', 'createdAt', 'updatedAt'])
+      .select([
+        'id',
+        'name',
+        'email',
+        'phone',
+        'role',
+        'isActive',
+        'createdAt',
+        'updatedAt',
+      ])
       .limit(limit)
       .offset(offset);
 
