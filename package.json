@@ -65,7 +65,6 @@
     "@types/node": "^22.10.7",
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^6.0.2",
-    "@types/uuid": "^10.0.0",
     "cookie-signature": "^1.2.2",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
@@ -81,8 +80,7 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0",
-    "uuid": "^13.0.0"
+    "typescript-eslint": "^8.20.0"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -96,7 +94,18 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.(t|j)s",
+      "!main.(t|j)s",
+      "!**/*.module.(t|j)s",
+      "!**/*.entity.(t|j)s",
+      "!**/*.dto.(t|j)s",
+      "!**/*.repository.(t|j)s",
+      "!**/*.guard.(t|j)s",
+      "!**/*.filter.(t|j)s",
+      "!**/*.interceptor.(t|j)s",
+      "!**/*.processor.(t|j)s",
+      "!migrations/**",
+      "!config/**"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"

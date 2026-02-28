@@ -30,7 +30,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
           : 'Internal server error',
     };
 
-    if (status === HttpStatus.INTERNAL_SERVER_ERROR) {
+    if (status === (HttpStatus.INTERNAL_SERVER_ERROR as number)) {
       console.error(exception);
       Sentry.captureException(exception);
     }

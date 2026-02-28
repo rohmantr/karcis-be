@@ -31,7 +31,6 @@ jobs:
       - name: Lint Code
         run: npm run lint
 
-      # jika test < 90% maka gagal
       - name: Test
         run: npm run test:cov
         continue-on-error: true

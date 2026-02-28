@@ -1,9 +1,9 @@
 import { PrimaryKey, Property } from '@mikro-orm/core';
-import { v4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 export abstract class BaseEntity {
   @PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' })
-  id: string = v4();
+  id: string = randomUUID();
 
   @Property()
   createdAt: Date = new Date();
