@@ -5,6 +5,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { UserRepository } from '../../users/repositories/user.repository';
 import { RegisterDto } from '../dto/register.dto';
@@ -16,6 +17,7 @@ export class AuthService {
   constructor(
     @Inject('UserRepository') private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -53,7 +55,8 @@ export class AuthService {
 
     const tokens = this.generateTokens(user.id, user.email);
 
-    user.refreshToken = tokens.refreshToken;
+    const hashedRefreshToken = await bcrypt.hash(tokens.refreshToken, 10);
+    user.refreshToken = hashedRefreshToken;
     user.refreshTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     await this.userRepository.getEntityManager().persistAndFlush(user);
     return tokens;
@@ -63,28 +66,42 @@ export class AuthService {
     const { refreshToken } = refreshTokenDto;
 
     try {
+      const secret = this.configService.get<string>('JWT_REFRESH_SECRET');
       const payload = await this.jwtService.verifyAsync<{
         sub: string;
         email: string;
-      }>(refreshToken, { secret: process.env.JWT_REFRESH_SECRET });
+      }>(refreshToken, { secret });
 
       const user = await this.userRepository.findOne({
         id: payload.sub,
-        refreshToken: refreshToken,
       });
-      if (!user) {
+
+      if (!user || !user.refreshToken) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      const isRefreshTokenValid = await bcrypt.compare(refreshToken, user.refreshToken);
+      if (!isRefreshTokenValid) {
+        // Token Reuse Detection: Revoke token immediately
+        user.refreshToken = undefined;
+        user.refreshTokenExpiresAt = undefined;
+        await this.userRepository.getEntityManager().persistAndFlush(user);
         throw new UnauthorizedException('Invalid refresh token');
       }
 
       const tokens = this.generateTokens(user.id, user.email);
 
-      user.refreshToken = tokens.refreshToken;
+      const hashedRefreshToken = await bcrypt.hash(tokens.refreshToken, 10);
+      user.refreshToken = hashedRefreshToken;
       user.refreshTokenExpiresAt = new Date(
         Date.now() + 7 * 24 * 60 * 60 * 1000,
       );
       await this.userRepository.getEntityManager().persistAndFlush(user);
       return tokens;
     } catch (_error) {
+      if (_error instanceof UnauthorizedException) {
+        throw _error;
+      }
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
@@ -105,13 +122,13 @@ export class AuthService {
     const payload = { sub: userId, email };
 
     const accessToken = this.jwtService.sign(payload, {
-      expiresIn: process.env.JWT_ACCESS_EXPIRES_IN as never,
-      secret: process.env.JWT_ACCESS_SECRET as string,
+      expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRES_IN'),
+      secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
     });
 
     const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN as never,
-      secret: process.env.JWT_REFRESH_SECRET as string,
+      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
+      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
     });
 
     return { accessToken, refreshToken };

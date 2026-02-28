@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { UserRepository } from '../../users/repositories/user.repository';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { User } from '../../users/entities/user.entity';
@@ -47,6 +48,18 @@ describe('AuthService', () => {
         AuthService,
         { provide: 'UserRepository', useValue: userRepository },
         { provide: JwtService, useValue: jwtService },
+        { 
+          provide: ConfigService, 
+          useValue: {
+            get: jest.fn().mockImplementation((key: string) => {
+              if (key === 'JWT_ACCESS_SECRET') return 'access-secret';
+              if (key === 'JWT_REFRESH_SECRET') return 'refresh-secret';
+              if (key === 'JWT_ACCESS_EXPIRES_IN') return '15m';
+              if (key === 'JWT_REFRESH_EXPIRES_IN') return '7d';
+              return null;
+            }),
+          },
+        },
       ],
     }).compile();
 
@@ -115,6 +128,7 @@ describe('AuthService', () => {
     it('should return tokens on successful login', async () => {
       userRepository.findByEmail.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-refresh-token');
       jwtService.sign
         .mockReturnValueOnce('access-token')
         .mockReturnValueOnce('refresh-token');
@@ -131,7 +145,7 @@ describe('AuthService', () => {
       expect(
         userRepository.getEntityManager().persistAndFlush,
       ).toHaveBeenCalledWith(
-        expect.objectContaining({ refreshToken: 'refresh-token' }),
+        expect.objectContaining({ refreshToken: 'hashed-refresh-token' }),
       );
     });
   });
@@ -163,6 +177,8 @@ describe('AuthService', () => {
         email: 'test@example.com',
       });
       userRepository.findOne.mockResolvedValue(mockUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed-refresh-token');
       jwtService.sign
         .mockReturnValueOnce('new-access-token')
         .mockReturnValueOnce('new-refresh-token');
@@ -178,7 +194,7 @@ describe('AuthService', () => {
       expect(
         userRepository.getEntityManager().persistAndFlush,
       ).toHaveBeenCalledWith(
-        expect.objectContaining({ refreshToken: 'new-refresh-token' }),
+        expect.objectContaining({ refreshToken: 'new-hashed-refresh-token' }),
       );
     });
   });
