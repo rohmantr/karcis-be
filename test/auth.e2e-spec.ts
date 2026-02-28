@@ -36,7 +36,7 @@ describe('AuthController (e2e)', () => {
 
   const testUser = {
     email: 'test-e2e@example.com',
-    password: 'password123',
+    password: 'Password123!',
   };
 
   it('/auth/register (POST)', async () => {

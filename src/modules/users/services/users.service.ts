@@ -1,19 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { EntityManager } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/postgresql';
 import { User } from '../entities/user.entity';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { UpdateUserDto } from '../dto/update-user.dto';
+import { FindAllUsersDto } from '../dto/find-all-users.dto';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly em: EntityManager) {}
 
-  create(_createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
-  }
-
-  async findAll() {
-    return this.em.find(User, {});
+  async findAll(query: FindAllUsersDto) {
+    const userRepository = this.em.getRepository(User);
+    return userRepository.findAllPaginated(query);
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -28,13 +24,5 @@ export class UsersService {
 
   async findOne(id: string) {
     return this.findById(id);
-  }
-
-  update(id: string, _updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
-
-  remove(id: string) {
-    return `This action removes a #${id} user`;
   }
 }
