@@ -13,6 +13,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "default": "gen_random_uuid()",
           "mappedType": "uuid"
         },
         "created_at": {
@@ -73,6 +74,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "default": "gen_random_uuid()",
           "mappedType": "uuid"
         },
         "created_at": {
@@ -166,6 +168,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "default": "gen_random_uuid()",
           "mappedType": "uuid"
         },
         "created_at": {
@@ -278,6 +281,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "default": "gen_random_uuid()",
           "mappedType": "uuid"
         },
         "created_at": {
@@ -348,6 +352,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "default": "gen_random_uuid()",
           "mappedType": "uuid"
         },
         "created_at": {

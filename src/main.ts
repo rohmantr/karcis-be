@@ -1,15 +1,22 @@
 import { VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import helmet from 'helmet';
+import helmet from '@fastify/helmet';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestFastifyApplication>(
+    AppModule,
+    new FastifyAdapter({ logger: true }),
+  );
 
-  app.use(helmet());
+  await app.register(helmet);
   app.enableCors();
 
   app.setGlobalPrefix('api');
@@ -32,7 +39,7 @@ async function bootstrap() {
     SwaggerModule.setup('api/docs', app, document);
   }
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
 bootstrap().catch((err) => {
   console.error(err);
