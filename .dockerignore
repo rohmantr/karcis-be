@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+temp/
+coverage/
+
+# Logs
+logs/
+*.log
+
+# Git
+.git/
+.husky/
+
+# System
+.DS_Store
+.vscode/
+.idea/
+
+# Environment files
+.env.development
+.env.test
+
+# Markdown & Documentation
+README.md
+docker-compose.yml

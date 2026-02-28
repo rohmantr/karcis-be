@@ -5,14 +5,15 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { FastifyReply, FastifyRequest } from 'fastify';
+import * as Sentry from '@sentry/nestjs';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
+    const response = ctx.getResponse<FastifyReply>();
+    const request = ctx.getRequest<FastifyRequest>();
 
     const status =
       exception instanceof HttpException
@@ -29,10 +30,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
           : 'Internal server error',
     };
 
-    if (status === (HttpStatus.INTERNAL_SERVER_ERROR as number)) {
+    if (status === HttpStatus.INTERNAL_SERVER_ERROR) {
       console.error(exception);
+      Sentry.captureException(exception);
     }
 
-    response.status(status).json(errorResponse);
+    response.status(status).send(errorResponse);
   }
 }

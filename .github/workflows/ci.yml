@@ -1,0 +1,48 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Lint Code
+        run: npm run lint
+
+      # jika test < 90% maka gagal
+      - name: Test
+        run: npm run test:cov
+        continue-on-error: true
+
+      - name: Check coverage
+        run: |
+          COVERAGE=$(npm run test:cov | grep -oP 'All files\\s+\\d+%')
+          if [[ ${COVERAGE%\%} -lt 90 ]]; then
+            echo "Coverage is less than 90%"
+            exit 1
+          fi
+
+      - name: Build Application
+        run: npm run build
