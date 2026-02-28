@@ -32,16 +32,7 @@ jobs:
         run: npm run lint
 
       - name: Test
-        run: npm run test:cov
-        continue-on-error: true
-
-      - name: Check coverage
-        run: |
-          COVERAGE=$(npm run test:cov | grep -oP 'All files\\s+\\d+%')
-          if [[ ${COVERAGE%\%} -lt 90 ]]; then
-            echo "Coverage is less than 90%"
-            exit 1
-          fi
+        run: npx jest --coverage
 
       - name: Build Application
         run: npm run build

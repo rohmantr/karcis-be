@@ -108,6 +108,11 @@
       "!config/**"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "coverageThreshold": {
+      "global": {
+        "statements": 90
+      }
+    }
   }
 }
