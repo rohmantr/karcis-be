@@ -6,7 +6,7 @@ import {
   Property,
 } from '@mikro-orm/core';
 import { BaseEntity } from '../../../common/database/base.entity';
-import { SeatTier } from './seat-tier.entity';
+import type { SeatTier } from './seat-tier.entity';
 import { EventRepository } from '../repositories/event.repository';
 
 @Entity({ repository: () => EventRepository })
@@ -15,6 +15,6 @@ export class Event extends BaseEntity {
   @Property()
   title!: string;
 
-  @OneToMany(() => SeatTier, (tier) => tier.event)
+  @OneToMany({ entity: () => 'SeatTier', mappedBy: 'event' })
   seatTiers = new Collection<SeatTier>(this);
 }

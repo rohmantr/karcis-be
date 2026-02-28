@@ -33,7 +33,7 @@ describe('BookingService', () => {
   });
 
   it('should create a booking', () => {
-    expect(service.create({ eventId: 'uuid', userId: 'uuid' } as any)).toBe(
+    expect(service.create({ eventId: 'uuid', userId: 'uuid' } as never)).toBe(
       'This action adds a new booking',
     );
   });
@@ -47,7 +47,7 @@ describe('BookingService', () => {
   });
 
   it('should update a booking', () => {
-    expect(service.update(1, { eventId: 'updated' } as any)).toBe(
+    expect(service.update(1, { eventId: 'updated' } as never)).toBe(
       'This action updates a #1 booking',
     );
   });

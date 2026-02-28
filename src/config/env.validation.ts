@@ -19,8 +19,10 @@ export const envSchema = z.object({
   REDIS_PASSWORD: z.string().optional(),
 
   // JWT
-  JWT_SECRET: z.string(),
-  JWT_EXPIRATION_TIME: z.string(),
+  JWT_ACCESS_SECRET: z.string(),
+  JWT_ACCESS_EXPIRES_IN: z.string(),
+  JWT_REFRESH_SECRET: z.string(),
+  JWT_REFRESH_EXPIRES_IN: z.string(),
 
   // Payment
   PAYMENT_GATEWAY_KEY: z.string(),

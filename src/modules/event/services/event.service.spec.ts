@@ -33,7 +33,7 @@ describe('EventService', () => {
   });
 
   it('should create an event', () => {
-    expect(service.create({ name: 'event name' } as any)).toBe(
+    expect(service.create({ name: 'event name' } as never)).toBe(
       'This action adds a new event',
     );
   });
@@ -47,7 +47,7 @@ describe('EventService', () => {
   });
 
   it('should update an event', () => {
-    expect(service.update(1, { name: 'updated' } as any)).toBe(
+    expect(service.update(1, { name: 'updated' } as never)).toBe(
       'This action updates a #1 event',
     );
   });

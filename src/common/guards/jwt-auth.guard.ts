@@ -3,10 +3,12 @@ import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-  handleRequest<TUser = unknown>(
+  handleRequest<TUser = never>(
     err: unknown,
     user: unknown,
     _info: unknown,
+    _context: unknown,
+    _status?: unknown,
   ): TUser {
     if (err || !user) {
       throw err instanceof Error

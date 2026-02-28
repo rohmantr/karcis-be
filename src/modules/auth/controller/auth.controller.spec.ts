@@ -1,19 +1,21 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from '../services/auth.service';
-import { CreateAuthDto } from '../dto/create-auth.dto';
-import { UpdateAuthDto } from '../dto/update-auth.dto';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 describe('AuthController', () => {
   let controller: AuthController;
   let service: AuthService;
 
   const mockAuthService = {
-    create: jest.fn((dto) => 'This action adds a new auth'),
-    findAll: jest.fn(() => 'This action returns all auth'),
-    findOne: jest.fn((id) => `This action returns a #${id} auth`),
-    update: jest.fn((id, dto) => `This action updates a #${id} auth`),
-    remove: jest.fn((id) => `This action removes a #${id} auth`),
+    register: jest.fn().mockResolvedValue({ id: '1', email: 'test@test.com' }),
+    login: jest
+      .fn()
+      .mockResolvedValue({ accessToken: 'token', refreshToken: 'token' }),
+    refreshToken: jest
+      .fn()
+      .mockResolvedValue({ accessToken: 'newtoken', refreshToken: 'newtoken' }),
+    logout: jest.fn().mockResolvedValue({ message: 'Logout successful' }),
   };
 
   beforeEach(async () => {
@@ -25,7 +27,10 @@ describe('AuthController', () => {
           useValue: mockAuthService,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(ThrottlerGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<AuthController>(AuthController);
     service = module.get<AuthService>(AuthService);
@@ -35,30 +40,38 @@ describe('AuthController', () => {
     expect(controller).toBeDefined();
   });
 
-  it('should create an auth', () => {
-    const dto: CreateAuthDto = { username: 'test', password: 'pw' } as any;
-    expect(controller.create(dto)).toBe('This action adds a new auth');
-    expect(service.create).toHaveBeenCalledWith(dto);
+  it('should register a user', async () => {
+    const dto = { email: 'test@test.com', password: 'password' } as any;
+    expect(await controller.register(dto)).toEqual({
+      id: '1',
+      email: 'test@test.com',
+    });
+    expect(service.register).toHaveBeenCalledWith(dto);
   });
 
-  it('should find all auth', () => {
-    expect(controller.findAll()).toBe('This action returns all auth');
-    expect(service.findAll).toHaveBeenCalled();
+  it('should login a user', async () => {
+    const dto = { email: 'test@test.com', password: 'password' } as any;
+    expect(await controller.login(dto)).toEqual({
+      accessToken: 'token',
+      refreshToken: 'token',
+    });
+    expect(service.login).toHaveBeenCalledWith(dto);
   });
 
-  it('should find an auth', () => {
-    expect(controller.findOne('1')).toBe('This action returns a #1 auth');
-    expect(service.findOne).toHaveBeenCalledWith(1);
+  it('should refresh token', async () => {
+    const dto = { refreshToken: 'token' } as any;
+    expect(await controller.refreshToken(dto)).toEqual({
+      accessToken: 'newtoken',
+      refreshToken: 'newtoken',
+    });
+    expect(service.refreshToken).toHaveBeenCalledWith(dto);
   });
 
-  it('should update an auth', () => {
-    const dto: UpdateAuthDto = { username: 'updated' } as any;
-    expect(controller.update('1', dto)).toBe('This action updates a #1 auth');
-    expect(service.update).toHaveBeenCalledWith(1, dto);
-  });
-
-  it('should remove an auth', () => {
-    expect(controller.remove('1')).toBe('This action removes a #1 auth');
-    expect(service.remove).toHaveBeenCalledWith(1);
+  it('should logout a user', async () => {
+    const user = { id: '1' } as any;
+    expect(await controller.logout(user)).toEqual({
+      message: 'Logout successful',
+    });
+    expect(service.logout).toHaveBeenCalledWith('1');
   });
 });

@@ -36,7 +36,7 @@ describe('NotificationController', () => {
   });
 
   it('should create a notification', () => {
-    const dto: CreateNotificationDto = { message: 'msg' } as any;
+    const dto: CreateNotificationDto = { message: 'msg' } as never;
     expect(controller.create(dto)).toBe('This action adds a new notification');
     expect(service.create).toHaveBeenCalledWith(dto);
   });
@@ -54,7 +54,7 @@ describe('NotificationController', () => {
   });
 
   it('should update a notification', () => {
-    const dto: UpdateNotificationDto = { message: 'updated' } as any;
+    const dto: UpdateNotificationDto = { message: 'updated' } as never;
     expect(controller.update('1', dto)).toBe(
       'This action updates a #1 notification',
     );

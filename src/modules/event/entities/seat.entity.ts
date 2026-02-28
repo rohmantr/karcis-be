@@ -8,14 +8,14 @@ import {
 } from '@mikro-orm/core';
 import { BaseEntity } from '../../../common/database/base.entity';
 import { SeatStatus } from '../../../common/entities/enums';
-import { Booking } from '../../booking/entities/booking.entity';
-import { SeatTier } from './seat-tier.entity';
+import type { Booking } from '../../booking/entities/booking.entity';
+import type { SeatTier } from './seat-tier.entity';
 import { SeatRepository } from '../repositories/seat.repository';
 
 @Entity({ repository: () => SeatRepository })
 export class Seat extends BaseEntity {
   [EntityRepositoryType]?: SeatRepository;
-  @ManyToOne(() => SeatTier)
+  @ManyToOne({ entity: () => 'SeatTier' })
   seatTier!: SeatTier;
 
   @Property()
@@ -30,6 +30,6 @@ export class Seat extends BaseEntity {
   @Property({ version: true })
   version!: number; // Optimistic locking key feature
 
-  @OneToMany(() => Booking, (booking) => booking.seat)
+  @OneToMany({ entity: () => 'Booking', mappedBy: 'seat' })
   bookings = new Collection<Booking>(this);
 }

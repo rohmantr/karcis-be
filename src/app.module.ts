@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { BullModule } from '@nestjs/bullmq';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validate } from './config/env.validation';
@@ -19,6 +20,12 @@ import mikroOrmConfig from './mikro-orm.config';
       isGlobal: true,
       validate,
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 10,
+      },
+    ]),
     MikroOrmModule.forRoot(mikroOrmConfig),
     BullModule.forRootAsync({
       inject: [ConfigService],

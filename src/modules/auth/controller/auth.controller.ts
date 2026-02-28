@@ -1,42 +1,43 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from '../services/auth.service';
-import { CreateAuthDto } from '../dto/create-auth.dto';
-import { UpdateAuthDto } from '../dto/update-auth.dto';
+import { RegisterDto, RegisterSchema } from '../dto/register.dto';
+import { LoginDto, LoginSchema } from '../dto/login.dto';
+import { RefreshTokenDto, RefreshTokenSchema } from '../dto/refresh-token.dto';
+import { User } from '../../users/entities/user.entity';
+import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post()
-  create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+  @UseGuards(ThrottlerGuard)
+  @Post('register')
+  async register(
+    @Body(new ZodValidationPipe(RegisterSchema)) registerDto: RegisterDto,
+  ) {
+    return this.authService.register(registerDto);
   }
 
-  @Get()
-  findAll() {
-    return this.authService.findAll();
+  @UseGuards(ThrottlerGuard)
+  @Post('login')
+  async login(@Body(new ZodValidationPipe(LoginSchema)) loginDto: LoginDto) {
+    return this.authService.login(loginDto);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
+  @Post('refresh-token')
+  async refreshToken(
+    @Body(new ZodValidationPipe(RefreshTokenSchema))
+    refreshTokenDto: RefreshTokenDto,
+  ) {
+    return this.authService.refreshToken(refreshTokenDto);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  async logout(@CurrentUser() user: User) {
+    return this.authService.logout(user.id);
   }
 }
