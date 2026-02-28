@@ -18,10 +18,10 @@ export class User extends BaseEntity {
   @Property({ hidden: true })
   password!: string;
 
-  @Property({ nullable: true })
+  @Property({ hidden: true, nullable: true })
   refreshToken?: string;
 
-  @Property({ nullable: true })
+  @Property({ hidden: true, nullable: true })
   refreshTokenExpiresAt?: Date;
 
   @OneToMany({ entity: () => 'Booking', mappedBy: 'user' })

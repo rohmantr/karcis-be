@@ -80,9 +80,11 @@ export class AuthService {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
-      const isRefreshTokenValid = await bcrypt.compare(refreshToken, user.refreshToken);
+      const isRefreshTokenValid = await bcrypt.compare(
+        refreshToken,
+        user.refreshToken,
+      );
       if (!isRefreshTokenValid) {
-        // Token Reuse Detection: Revoke token immediately
         user.refreshToken = undefined;
         user.refreshTokenExpiresAt = undefined;
         await this.userRepository.getEntityManager().persistAndFlush(user);
@@ -122,13 +124,17 @@ export class AuthService {
     const payload = { sub: userId, email };
 
     const accessToken = this.jwtService.sign(payload, {
-      expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRES_IN'),
-      secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+      expiresIn: this.configService.get<string>(
+        'JWT_ACCESS_EXPIRES_IN',
+      ) as unknown as number,
+      secret: this.configService.get<string>('JWT_ACCESS_SECRET') as string,
     });
 
     const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
-      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      expiresIn: this.configService.get<string>(
+        'JWT_REFRESH_EXPIRES_IN',
+      ) as unknown as number,
+      secret: this.configService.get<string>('JWT_REFRESH_SECRET') as string,
     });
 
     return { accessToken, refreshToken };

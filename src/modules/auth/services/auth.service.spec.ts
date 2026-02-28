@@ -48,8 +48,8 @@ describe('AuthService', () => {
         AuthService,
         { provide: 'UserRepository', useValue: userRepository },
         { provide: JwtService, useValue: jwtService },
-        { 
-          provide: ConfigService, 
+        {
+          provide: ConfigService,
           useValue: {
             get: jest.fn().mockImplementation((key: string) => {
               if (key === 'JWT_ACCESS_SECRET') return 'access-secret';

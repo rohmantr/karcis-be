@@ -2,13 +2,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtStrategy } from './jwt.strategy';
 import { UserRepository } from '../../users/repositories/user.repository';
 import { UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 describe('JwtStrategy', () => {
   let strategy: JwtStrategy;
   let userRepository: Record<string, jest.Mock>;
 
   beforeEach(async () => {
-    process.env.JWT_ACCESS_SECRET = 'secret';
     userRepository = {
       findOne: jest.fn(),
     };
@@ -19,6 +19,12 @@ describe('JwtStrategy', () => {
         {
           provide: 'UserRepository',
           useValue: userRepository,
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue('secret'),
+          },
         },
       ],
     }).compile();
