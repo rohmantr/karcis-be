@@ -36,7 +36,7 @@ describe('BookingController', () => {
   });
 
   it('should create a booking', () => {
-    const dto: CreateBookingDto = { eventId: 'uuid', userId: 'uuid' } as any;
+    const dto: CreateBookingDto = { eventId: 'uuid', userId: 'uuid' } as never;
     expect(controller.create(dto)).toBe('This action adds a new booking');
     expect(service.create).toHaveBeenCalledWith(dto);
   });
@@ -52,7 +52,7 @@ describe('BookingController', () => {
   });
 
   it('should update a booking', () => {
-    const dto: UpdateBookingDto = { eventId: 'updated' } as any;
+    const dto: UpdateBookingDto = { eventId: 'updated' } as never;
     expect(controller.update('1', dto)).toBe(
       'This action updates a #1 booking',
     );

@@ -36,7 +36,7 @@ describe('EventController', () => {
   });
 
   it('should create an event', () => {
-    const dto: CreateEventDto = { name: 'name' } as any;
+    const dto: CreateEventDto = { name: 'name' } as never;
     expect(controller.create(dto)).toBe('This action adds a new event');
     expect(service.create).toHaveBeenCalledWith(dto);
   });
@@ -52,7 +52,7 @@ describe('EventController', () => {
   });
 
   it('should update an event', () => {
-    const dto: UpdateEventDto = { name: 'updated' } as any;
+    const dto: UpdateEventDto = { name: 'updated' } as never;
     expect(controller.update('1', dto)).toBe('This action updates a #1 event');
     expect(service.update).toHaveBeenCalledWith(1, dto);
   });

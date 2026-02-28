@@ -5,4 +5,9 @@ export const RegisterSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters long'),
 });
 
-export type RegisterDto = z.infer<typeof RegisterSchema>;
+export type RegisterDtoType = z.infer<typeof RegisterSchema>;
+
+export class RegisterDto implements RegisterDtoType {
+  email!: string;
+  password!: string;
+}

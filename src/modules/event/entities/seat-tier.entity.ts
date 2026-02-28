@@ -7,14 +7,14 @@ import {
   Property,
 } from '@mikro-orm/core';
 import { BaseEntity } from '../../../common/database/base.entity';
-import { Event } from './event.entity';
-import { Seat } from './seat.entity';
+import type { Event } from './event.entity';
+import type { Seat } from './seat.entity';
 import { SeatTierRepository } from '../repositories/seat-tier.repository';
 
 @Entity({ repository: () => SeatTierRepository })
 export class SeatTier extends BaseEntity {
   [EntityRepositoryType]?: SeatTierRepository;
-  @ManyToOne(() => Event)
+  @ManyToOne({ entity: () => 'Event' })
   event!: Event;
 
   @Property()
@@ -23,6 +23,6 @@ export class SeatTier extends BaseEntity {
   @Property({ type: 'decimal', precision: 12, scale: 2 })
   price!: string;
 
-  @OneToMany(() => Seat, (seat) => seat.seatTier)
+  @OneToMany({ entity: () => 'Seat', mappedBy: 'seatTier' })
   seats = new Collection<Seat>(this);
 }

@@ -33,7 +33,7 @@ describe('NotificationService', () => {
   });
 
   it('should create a notification', () => {
-    expect(service.create({ message: 'hello' } as any)).toBe(
+    expect(service.create({ message: 'hello' } as never)).toBe(
       'This action adds a new notification',
     );
   });
@@ -47,7 +47,7 @@ describe('NotificationService', () => {
   });
 
   it('should update a notification', () => {
-    expect(service.update(1, { message: 'updated' } as any)).toBe(
+    expect(service.update(1, { message: 'updated' } as never)).toBe(
       'This action updates a #1 notification',
     );
   });

@@ -2,10 +2,11 @@ import {
   ConflictException,
   Injectable,
   UnauthorizedException,
+  Inject,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { UserRepository } from 'src/modules/users/repositories/user.repository';
+import { UserRepository } from '../../users/repositories/user.repository';
 import { RegisterDto } from '../dto/register.dto';
 import { LoginDto } from '../dto/login.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
@@ -13,7 +14,7 @@ import { RefreshTokenDto } from '../dto/refresh-token.dto';
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly userRepository: UserRepository,
+    @Inject('UserRepository') private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -29,6 +30,8 @@ export class AuthService {
     const user = this.userRepository.create({
       email,
       password: hashedPassword,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     await this.userRepository.getEntityManager().persistAndFlush(user);
     return {
@@ -89,8 +92,8 @@ export class AuthService {
   async logout(userId: string) {
     const user = await this.userRepository.findOne({ id: userId });
     if (user) {
-      user.refreshToken = null;
-      user.refreshTokenExpiresAt = null;
+      user.refreshToken = undefined;
+      user.refreshTokenExpiresAt = undefined;
       await this.userRepository.getEntityManager().flush();
     }
     return {
@@ -102,13 +105,13 @@ export class AuthService {
     const payload = { sub: userId, email };
 
     const accessToken = this.jwtService.sign(payload, {
-      expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
-      secret: process.env.JWT_ACCESS_SECRET,
+      expiresIn: process.env.JWT_ACCESS_EXPIRES_IN as never,
+      secret: process.env.JWT_ACCESS_SECRET as string,
     });
 
     const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
-      secret: process.env.JWT_REFRESH_SECRET,
+      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN as never,
+      secret: process.env.JWT_REFRESH_SECRET as string,
     });
 
     return { accessToken, refreshToken };

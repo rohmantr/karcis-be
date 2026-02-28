@@ -20,5 +20,6 @@ export default defineConfig({
     path: 'dist/migrations',
     pathTs: 'src/migrations',
   },
+  tsNode: process.env.NODE_ENV === 'test',
   extensions: [Migrator],
 });

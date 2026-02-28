@@ -6,7 +6,7 @@ import {
   Property,
 } from '@mikro-orm/core';
 import { BaseEntity } from '../../../common/database/base.entity';
-import { Booking } from '../../booking/entities/booking.entity';
+import type { Booking } from '../../booking/entities/booking.entity';
 import { UserRepository } from '../repositories/user.repository';
 
 @Entity({ repository: () => UserRepository })
@@ -24,6 +24,6 @@ export class User extends BaseEntity {
   @Property({ nullable: true })
   refreshTokenExpiresAt?: Date;
 
-  @OneToMany(() => Booking, (booking) => booking.user)
+  @OneToMany({ entity: () => 'Booking', mappedBy: 'user' })
   bookings = new Collection<Booking>(this);
 }

@@ -40,7 +40,7 @@ describe('UsersController', () => {
       username: 'test',
       password: 'pw',
       role: 'admin',
-    } as any;
+    } as never;
     expect(controller.create(dto)).toBe('This action adds a new user');
     expect(service.create).toHaveBeenCalledWith(dto);
   });
@@ -52,17 +52,17 @@ describe('UsersController', () => {
 
   it('should find a user', () => {
     expect(controller.findOne('1')).toBe('This action returns a #1 user');
-    expect(service.findOne).toHaveBeenCalledWith(1);
+    expect(service.findOne).toHaveBeenCalledWith('1');
   });
 
   it('should update a user', () => {
     const dto: UpdateUserDto = { username: 'test' };
     expect(controller.update('1', dto)).toBe('This action updates a #1 user');
-    expect(service.update).toHaveBeenCalledWith(1, dto);
+    expect(service.update).toHaveBeenCalledWith('1', dto);
   });
 
   it('should remove a user', () => {
     expect(controller.remove('1')).toBe('This action removes a #1 user');
-    expect(service.remove).toHaveBeenCalledWith(1);
+    expect(service.remove).toHaveBeenCalledWith('1');
   });
 });
