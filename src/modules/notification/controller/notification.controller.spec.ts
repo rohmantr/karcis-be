@@ -47,18 +47,24 @@ describe('NotificationController', () => {
   });
 
   it('should find a notification', () => {
-    expect(controller.findOne('1')).toBe('This action returns a #1 notification');
+    expect(controller.findOne('1')).toBe(
+      'This action returns a #1 notification',
+    );
     expect(service.findOne).toHaveBeenCalledWith(1);
   });
 
   it('should update a notification', () => {
     const dto: UpdateNotificationDto = { message: 'updated' } as any;
-    expect(controller.update('1', dto)).toBe('This action updates a #1 notification');
+    expect(controller.update('1', dto)).toBe(
+      'This action updates a #1 notification',
+    );
     expect(service.update).toHaveBeenCalledWith(1, dto);
   });
 
   it('should remove a notification', () => {
-    expect(controller.remove('1')).toBe('This action removes a #1 notification');
+    expect(controller.remove('1')).toBe(
+      'This action removes a #1 notification',
+    );
     expect(service.remove).toHaveBeenCalledWith(1);
   });
 });

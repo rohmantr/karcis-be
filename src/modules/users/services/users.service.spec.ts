@@ -33,7 +33,13 @@ describe('UsersService', () => {
   });
 
   it('should create a user', () => {
-    expect(service.create({ username: 'test', password: 'password', role: 'admin' } as any)).toBe('This action adds a new user');
+    expect(
+      service.create({
+        username: 'test',
+        password: 'password',
+        role: 'admin',
+      } as any),
+    ).toBe('This action adds a new user');
   });
 
   it('should find all users', () => {
@@ -45,7 +51,9 @@ describe('UsersService', () => {
   });
 
   it('should update a user', () => {
-    expect(service.update(1, { username: 'updated' })).toBe('This action updates a #1 user');
+    expect(service.update(1, { username: 'updated' })).toBe(
+      'This action updates a #1 user',
+    );
   });
 
   it('should remove a user', () => {

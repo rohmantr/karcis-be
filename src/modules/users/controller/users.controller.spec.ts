@@ -36,7 +36,11 @@ describe('UsersController', () => {
   });
 
   it('should create a user', () => {
-    const dto: CreateUserDto = { username: 'test', password: 'pw', role: 'admin' } as any;
+    const dto: CreateUserDto = {
+      username: 'test',
+      password: 'pw',
+      role: 'admin',
+    } as any;
     expect(controller.create(dto)).toBe('This action adds a new user');
     expect(service.create).toHaveBeenCalledWith(dto);
   });

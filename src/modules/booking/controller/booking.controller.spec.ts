@@ -53,7 +53,9 @@ describe('BookingController', () => {
 
   it('should update a booking', () => {
     const dto: UpdateBookingDto = { eventId: 'updated' } as any;
-    expect(controller.update('1', dto)).toBe('This action updates a #1 booking');
+    expect(controller.update('1', dto)).toBe(
+      'This action updates a #1 booking',
+    );
     expect(service.update).toHaveBeenCalledWith(1, dto);
   });
 

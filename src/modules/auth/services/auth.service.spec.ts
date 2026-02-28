@@ -33,7 +33,9 @@ describe('AuthService', () => {
   });
 
   it('should create an auth', () => {
-    expect(service.create({ username: 'test', password: 'pw' } as any)).toBe('This action adds a new auth');
+    expect(service.create({ username: 'test', password: 'pw' } as any)).toBe(
+      'This action adds a new auth',
+    );
   });
 
   it('should find all auth', () => {
@@ -45,7 +47,9 @@ describe('AuthService', () => {
   });
 
   it('should update an auth', () => {
-    expect(service.update(1, { username: 'updated' } as any)).toBe('This action updates a #1 auth');
+    expect(service.update(1, { username: 'updated' } as any)).toBe(
+      'This action updates a #1 auth',
+    );
   });
 
   it('should remove an auth', () => {

@@ -33,7 +33,9 @@ describe('BookingService', () => {
   });
 
   it('should create a booking', () => {
-    expect(service.create({ eventId: 'uuid', userId: 'uuid' } as any)).toBe('This action adds a new booking');
+    expect(service.create({ eventId: 'uuid', userId: 'uuid' } as any)).toBe(
+      'This action adds a new booking',
+    );
   });
 
   it('should find all bookings', () => {
@@ -45,7 +47,9 @@ describe('BookingService', () => {
   });
 
   it('should update a booking', () => {
-    expect(service.update(1, { eventId: 'updated' } as any)).toBe('This action updates a #1 booking');
+    expect(service.update(1, { eventId: 'updated' } as any)).toBe(
+      'This action updates a #1 booking',
+    );
   });
 
   it('should remove a booking', () => {
