@@ -21,4 +21,4 @@ import { PasswordHelper } from '../../common/helpers/password.helper';
   providers: [AuthService, JwtStrategy, TokenHelper, PasswordHelper],
   exports: [TokenHelper, PasswordHelper],
 })
-export class AuthModule { }
+export class AuthModule {}
