@@ -50,9 +50,10 @@ export class EventService {
 
   @CreateRequestContext()
   async findOne(id: string): Promise<Event> {
-    const event = await this.eventRepository.findOne(id, {
-      populate: ['createdBy'],
-    });
+    const event = await this.eventRepository.findOne(
+      { id, status: { $ne: EventStatus.CANCELLED } },
+      { populate: ['createdBy'] },
+    );
     if (!event) {
       throw new NotFoundException('Event not found');
     }

@@ -4,6 +4,7 @@ import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { User } from '../../users/entities/user.entity';
 import { EventStatus } from '../../../common/entities/enums';
 import { EntityManager } from '@mikro-orm/postgresql';
+import { Event } from '../entities/event.entity';
 
 jest.mock('@mikro-orm/core', () => {
   const actual = jest.requireActual('@mikro-orm/core');
@@ -137,9 +138,10 @@ describe('EventService', () => {
       const result = await service.findOne('evt-1');
 
       expect(result).toBe(sampleEvent);
-      expect(eventRepo.findOne).toHaveBeenCalledWith('evt-1', {
-        populate: ['createdBy'],
-      });
+      expect(eventRepo.findOne).toHaveBeenCalledWith(
+        { id: 'evt-1', status: { $ne: EventStatus.CANCELLED } },
+        { populate: ['createdBy'] },
+      );
     });
 
     it('throws NotFoundException when event not found', async () => {

@@ -40,6 +40,9 @@ describe('EventController (e2e)', () => {
     await app.getHttpAdapter().getInstance().ready();
 
     orm = app.get(MikroORM);
+    if (process.env.NODE_ENV !== 'test') {
+      throw new Error('Refusing to drop schema outside of test environment');
+    }
     const generator = orm.getSchemaGenerator();
     await generator.dropSchema();
     await generator.createSchema();
@@ -52,8 +55,8 @@ describe('EventController (e2e)', () => {
       .expect(201);
 
     // Promote to ADMIN via direct DB update
-    const em = orm.em.fork();
-    await em.execute(
+    const connection = orm.em.getConnection();
+    await connection.execute(
       `UPDATE "user" SET role = 'ADMIN' WHERE email = '${adminUser.email}'`,
     );
 
