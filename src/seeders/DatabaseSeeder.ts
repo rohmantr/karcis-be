@@ -9,7 +9,6 @@ export class DatabaseSeeder extends Seeder {
   async run(em: EntityManager): Promise<void> {
     const passwordHash = await bcrypt.hash('password123', 10);
 
-    // Create Admin User
     const adminUser = em.create(User, {
       name: 'System Admin',
       email: 'admin@karcis.com',
@@ -19,7 +18,6 @@ export class DatabaseSeeder extends Seeder {
       isActive: true,
     });
 
-    // Create Regular User
     const regularUser = em.create(User, {
       name: 'Regular Customer',
       email: 'user@karcis.com',
