@@ -51,7 +51,7 @@ export class EventService {
   @CreateRequestContext()
   async findOne(id: string): Promise<Event> {
     const event = await this.eventRepository.findOne(
-      { id, status: { $ne: EventStatus.CANCELLED } },
+      { id, status: { $in: [EventStatus.PUBLISHED, EventStatus.SOLD_OUT] } },
       { populate: ['createdBy'] },
     );
     if (!event) {

@@ -2,13 +2,13 @@ import { z } from 'zod';
 import { EventStatus } from '../../../common/entities/enums';
 
 export const CreateEventSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(255),
-  artistName: z.string().min(1, 'Artist name is required').max(255),
-  description: z.string().min(1, 'Description is required'),
-  genre: z.string().min(1, 'Genre is required').max(100),
-  city: z.string().min(1, 'City is required').max(100),
-  venue: z.string().min(1, 'Venue is required').max(255),
-  address: z.string().min(1, 'Address is required'),
+  title: z.string().trim().min(1, 'Title is required').max(255),
+  artistName: z.string().trim().min(1, 'Artist name is required').max(255),
+  description: z.string().trim().min(1, 'Description is required'),
+  genre: z.string().trim().min(1, 'Genre is required').max(100),
+  city: z.string().trim().min(1, 'City is required').max(100),
+  venue: z.string().trim().min(1, 'Venue is required').max(255),
+  address: z.string().trim().min(1, 'Address is required'),
   eventDate: z.coerce.date().refine((d) => d > new Date(), {
     message: 'Event date must be in the future',
   }),

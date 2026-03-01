@@ -9,6 +9,8 @@ import {
   UseGuards,
   Query,
   ParseUUIDPipe,
+  ParseIntPipe,
+  DefaultValuePipe,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -54,14 +56,10 @@ export class EventController {
   findAll(
     @Query('city') city?: string,
     @Query('genre') genre?: string,
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
+    @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset?: number,
   ) {
-    return this.eventService.findAll(
-      { city, genre },
-      limit ? parseInt(limit, 10) : undefined,
-      offset ? parseInt(offset, 10) : undefined,
-    );
+    return this.eventService.findAll({ city, genre }, limit, offset);
   }
 
   @ApiOperation({ summary: 'List my events' })

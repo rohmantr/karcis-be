@@ -91,7 +91,7 @@ describe('EventController', () => {
     });
 
     it('passes query filters to service', async () => {
-      await controller.findAll('Jakarta', 'Rock', '10', '5');
+      await controller.findAll('Jakarta', 'Rock', 10, 5);
 
       expect(service.findAll).toHaveBeenCalledWith(
         { city: 'Jakarta', genre: 'Rock' },

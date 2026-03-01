@@ -139,7 +139,10 @@ describe('EventService', () => {
 
       expect(result).toBe(sampleEvent);
       expect(eventRepo.findOne).toHaveBeenCalledWith(
-        { id: 'evt-1', status: { $ne: EventStatus.CANCELLED } },
+        {
+          id: 'evt-1',
+          status: { $in: [EventStatus.PUBLISHED, EventStatus.SOLD_OUT] },
+        },
         { populate: ['createdBy'] },
       );
     });
