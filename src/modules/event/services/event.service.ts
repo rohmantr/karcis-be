@@ -40,10 +40,12 @@ export class EventService {
     limit = 20,
     offset = 0,
   ): Promise<{ data: Event[]; total: number }> {
+    const safeLimit = Math.min(Math.max(limit, 1), 100);
+    const safeOffset = Math.max(offset, 0);
     const [data, total] = await this.eventRepository.findPublished(
       filters,
-      limit,
-      offset,
+      safeLimit,
+      safeOffset,
     );
     return { data, total };
   }

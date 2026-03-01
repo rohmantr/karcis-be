@@ -127,6 +127,22 @@ describe('EventService', () => {
 
       expect(eventRepo.findPublished).toHaveBeenCalledWith({}, 10, 5);
     });
+
+    it('clamps negative limit to 1 and negative offset to 0', async () => {
+      eventRepo.findPublished.mockResolvedValue([[], 0]);
+
+      await service.findAll({}, -5, -10);
+
+      expect(eventRepo.findPublished).toHaveBeenCalledWith({}, 1, 0);
+    });
+
+    it('clamps excessive limit to 100', async () => {
+      eventRepo.findPublished.mockResolvedValue([[], 0]);
+
+      await service.findAll({}, 500, 0);
+
+      expect(eventRepo.findPublished).toHaveBeenCalledWith({}, 100, 0);
+    });
   });
 
   // ── findOne ───────────────────────────────────────
