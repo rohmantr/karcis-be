@@ -1,26 +1,109 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { EntityManager } from '@mikro-orm/postgresql';
+import { CreateRequestContext } from '@mikro-orm/core';
+import { Event } from '../entities/event.entity';
+import { User } from '../../users/entities/user.entity';
+import { EventRepository } from '../repositories/event.repository';
 import { CreateEventDto } from '../dto/create-event.dto';
 import { UpdateEventDto } from '../dto/update-event.dto';
+import { EventStatus } from '../../../common/entities/enums';
+import type { EventFilters } from '../repositories/event.repository';
 
 @Injectable()
 export class EventService {
-  create(_createEventDto: CreateEventDto) {
-    return 'This action adds a new event';
+  constructor(private readonly em: EntityManager) {}
+
+  private get eventRepository(): EventRepository {
+    return this.em.getRepository(Event);
   }
 
-  findAll() {
-    return `This action returns all event`;
+  @CreateRequestContext()
+  async create(dto: CreateEventDto, userId: string): Promise<Event> {
+    const user = this.em.getReference(User, userId);
+    const event = this.eventRepository.create({
+      ...dto,
+      createdBy: user,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    await this.em.persistAndFlush(event);
+    return event;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} event`;
+  @CreateRequestContext()
+  async findAll(
+    filters: EventFilters = {},
+    limit = 20,
+    offset = 0,
+  ): Promise<{ data: Event[]; total: number }> {
+    const safeLimit = Math.min(Math.max(limit, 1), 100);
+    const safeOffset = Math.max(offset, 0);
+    const [data, total] = await this.eventRepository.findPublished(
+      filters,
+      safeLimit,
+      safeOffset,
+    );
+    return { data, total };
   }
 
-  update(id: number, _updateEventDto: UpdateEventDto) {
-    return `This action updates a #${id} event`;
+  @CreateRequestContext()
+  async findOne(id: string): Promise<Event> {
+    const event = await this.eventRepository.findOne(
+      { id, status: { $in: [EventStatus.PUBLISHED, EventStatus.SOLD_OUT] } },
+      { populate: ['createdBy'] },
+    );
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+    return event;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} event`;
+  @CreateRequestContext()
+  async findMyEvents(userId: string): Promise<Event[]> {
+    return this.eventRepository.findByCreator(userId);
+  }
+
+  @CreateRequestContext()
+  async update(
+    id: string,
+    dto: UpdateEventDto,
+    userId: string,
+  ): Promise<Event> {
+    const event = await this.findEventOrFail(id);
+    this.assertOwnership(event, userId);
+    this.eventRepository.assign(event, dto);
+    await this.em.flush();
+    return event;
+  }
+
+  @CreateRequestContext()
+  async remove(id: string, userId: string): Promise<{ message: string }> {
+    const event = await this.findEventOrFail(id);
+    this.assertOwnership(event, userId);
+    event.status = EventStatus.CANCELLED;
+    await this.em.flush();
+    return { message: 'Event cancelled successfully' };
+  }
+
+  private async findEventOrFail(id: string): Promise<Event> {
+    const event = await this.eventRepository.findOne(id, {
+      populate: ['createdBy'],
+    });
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+    return event;
+  }
+
+  private assertOwnership(event: Event, userId: string): void {
+    if (event.createdBy.id !== userId) {
+      throw new ForbiddenException(
+        'You do not have permission to modify this event',
+      );
+    }
   }
 }
