@@ -4,6 +4,8 @@ import { Migrator } from '@mikro-orm/migrations';
 import { envSchema } from './config/env.validation';
 import 'dotenv/config';
 
+import { SeedManager } from '@mikro-orm/seeder';
+
 const config = envSchema.partial().parse(process.env);
 
 export default defineConfig({
@@ -20,6 +22,14 @@ export default defineConfig({
     path: 'dist/migrations',
     pathTs: 'src/migrations',
   },
+  seeder: {
+    path: 'dist/seeders',
+    pathTs: 'src/seeders',
+    defaultSeeder: 'DatabaseSeeder',
+    glob: '!(*.d).{js,ts}',
+    emit: 'ts',
+    fileName: (className: string) => className,
+  },
   tsNode: process.env.NODE_ENV === 'test',
-  extensions: [Migrator],
+  extensions: [Migrator, SeedManager],
 });
