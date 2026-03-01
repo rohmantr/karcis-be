@@ -17,12 +17,14 @@
     "migrate:create": "npx dotenv-cli -e .env -- npx mikro-orm migration:create",
     "migrate:down": "npx dotenv-cli -e .env -- npx mikro-orm migration:down",
     "migrate:fresh": "npx dotenv-cli -e .env -- npx mikro-orm migration:fresh",
+    "seed:create": "npx dotenv-cli -e .env -- npx mikro-orm seeder:create",
+    "seed": "npx dotenv-cli -e .env -- npx mikro-orm seeder:run",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "npx dotenv-cli -e .env.test -- jest --config ./test/jest-e2e.json",
+    "test:e2e": "npx dotenv-cli -e .env.test -- jest --config ./test/jest-e2e.json --runInBand",
     "prepare": "husky"
   },
   "dependencies": {
@@ -33,6 +35,7 @@
     "@mikro-orm/nestjs": "^6.1.1",
     "@mikro-orm/postgresql": "^6.6.7",
     "@mikro-orm/reflection": "^6.6.7",
+    "@mikro-orm/seeder": "^6.6.7",
     "@nestjs/bullmq": "^11.0.4",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.3",
@@ -108,7 +111,8 @@
       "!**/*.interceptor.(t|j)s",
       "!**/*.processor.(t|j)s",
       "!migrations/**",
-      "!config/**"
+      "!config/**",
+      "!seeders/**"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
