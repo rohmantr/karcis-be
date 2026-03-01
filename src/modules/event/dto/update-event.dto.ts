@@ -1,4 +1,19 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateEventDto } from './create-event.dto';
+import { z } from 'zod';
+import { CreateEventSchema } from './create-event.dto';
 
-export class UpdateEventDto extends PartialType(CreateEventDto) {}
+export const UpdateEventSchema = CreateEventSchema.partial();
+
+export type UpdateEventDtoType = z.infer<typeof UpdateEventSchema>;
+
+export class UpdateEventDto implements UpdateEventDtoType {
+  title?: string;
+  artistName?: string;
+  description?: string;
+  genre?: string;
+  city?: string;
+  venue?: string;
+  address?: string;
+  eventDate?: Date;
+  posterUrl?: string;
+  status?: import('../../../common/entities/enums').EventStatus;
+}
