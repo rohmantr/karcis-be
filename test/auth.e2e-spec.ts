@@ -4,6 +4,7 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import request from 'supertest';
+import cookie from '@fastify/cookie';
 import { AppModule } from './../src/app.module';
 import { MikroORM } from '@mikro-orm/core';
 
@@ -19,6 +20,11 @@ describe('AuthController (e2e)', () => {
     app = moduleFixture.createNestApplication<NestFastifyApplication>(
       new FastifyAdapter(),
     );
+
+    await app.register(cookie, {
+      secret: process.env.COOKIE_SECRET || 'test-cookie-secret',
+    });
+
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
 
@@ -42,7 +48,7 @@ describe('AuthController (e2e)', () => {
   };
 
   let accessToken: string;
-  let refreshToken: string;
+  let cookies: string[];
 
   it('/auth/register (POST) - success', async () => {
     const res = await request(app.getHttpServer())
@@ -69,16 +75,29 @@ describe('AuthController (e2e)', () => {
       .expect(400);
   });
 
-  it('/auth/login (POST) - success', async () => {
+  it('/auth/login (POST) - success with cookies', async () => {
     const res = await request(app.getHttpServer())
       .post('/auth/login')
       .send({ email: testUser.email, password: testUser.password })
       .expect(200);
 
     expect(res.body).toHaveProperty('accessToken');
-    expect(res.body).toHaveProperty('refreshToken');
     accessToken = res.body.accessToken;
-    refreshToken = res.body.refreshToken;
+
+    // Verify Set-Cookie headers are present
+    cookies = res.headers['set-cookie'] as unknown as string[];
+    expect(cookies).toBeDefined();
+    expect(cookies.length).toBeGreaterThanOrEqual(2);
+
+    const cookieNames = cookies.map((c: string) => c.split('=')[0]);
+    expect(cookieNames).toContain('access_token');
+    expect(cookieNames).toContain('refresh_token');
+
+    // Verify HttpOnly flag
+    const accessCookie = cookies.find((c: string) =>
+      c.startsWith('access_token='),
+    );
+    expect(accessCookie).toContain('HttpOnly');
   });
 
   it('/auth/login (POST) - invalid credentials', async () => {
@@ -88,66 +107,77 @@ describe('AuthController (e2e)', () => {
       .expect(401);
   });
 
-  it('/auth/refresh-token (POST) - success with rotation', async () => {
-    // Ensure we have valid tokens from login
-    expect(refreshToken).toBeDefined();
+  it('/auth/refresh-token (POST) - success with cookie', async () => {
+    expect(cookies).toBeDefined();
 
     const res = await request(app.getHttpServer())
       .post('/auth/refresh-token')
-      .send({ refreshToken })
+      .set('Cookie', cookies)
+      .send({})
       .expect(200);
 
     expect(res.body).toHaveProperty('accessToken');
-    expect(res.body).toHaveProperty('refreshToken');
-    expect(res.body.refreshToken).not.toBe(refreshToken);
 
-    // Update tokens for subsequent tests
+    // Update cookies for subsequent tests
+    const newCookies = res.headers['set-cookie'] as unknown as string[];
+    if (newCookies) cookies = newCookies;
     accessToken = res.body.accessToken;
-    refreshToken = res.body.refreshToken;
   });
 
-  it('/auth/refresh-token (POST) - old token rejected after rotation', async () => {
-    // Login again to get a fresh token pair
+  it('/auth/refresh-token (POST) - old cookie rejected after rotation', async () => {
+    // Login again to get a fresh cookie set
     const loginRes = await request(app.getHttpServer())
       .post('/auth/login')
       .send({ email: testUser.email, password: testUser.password })
       .expect(200);
 
-    const firstToken = loginRes.body.refreshToken;
+    const firstCookies = loginRes.headers[
+      'set-cookie'
+    ] as unknown as string[];
     accessToken = loginRes.body.accessToken;
 
-    // Use the token to rotate
+    // Use the cookie to rotate
     const rotateRes = await request(app.getHttpServer())
       .post('/auth/refresh-token')
-      .send({ refreshToken: firstToken })
+      .set('Cookie', firstCookies)
+      .send({})
       .expect(200);
 
-    expect(rotateRes.body).toHaveProperty('refreshToken');
-    refreshToken = rotateRes.body.refreshToken;
+    expect(rotateRes.body).toHaveProperty('accessToken');
+    cookies = rotateRes.headers['set-cookie'] as unknown as string[];
     accessToken = rotateRes.body.accessToken;
 
-    // Try to reuse the first token (already rotated/revoked)
+    // Try to reuse the first cookies (already rotated/revoked)
     await request(app.getHttpServer())
       .post('/auth/refresh-token')
-      .send({ refreshToken: firstToken })
+      .set('Cookie', firstCookies)
+      .send({})
       .expect(401);
   });
 
-  it('/auth/logout (POST) - success', async () => {
-    // Login to get a fresh token since previous test may have revoked all
+  it('/auth/logout (POST) - success with cookie clearing', async () => {
+    // Login to get a fresh token
     const loginRes = await request(app.getHttpServer())
       .post('/auth/login')
       .send({ email: testUser.email, password: testUser.password })
       .expect(200);
 
     accessToken = loginRes.body.accessToken;
+    const loginCookies = loginRes.headers[
+      'set-cookie'
+    ] as unknown as string[];
 
     const res = await request(app.getHttpServer())
       .post('/auth/logout')
       .set('Authorization', `Bearer ${accessToken}`)
+      .set('Cookie', loginCookies)
       .expect(200);
 
     expect(res.body).toEqual({ message: 'Logout successful' });
+
+    // Verify cookies are cleared (Set-Cookie headers with empty/expired values)
+    const logoutCookies = res.headers['set-cookie'] as unknown as string[];
+    expect(logoutCookies).toBeDefined();
   });
 
   it('/auth/logout (POST) - unauthorized without token', async () => {

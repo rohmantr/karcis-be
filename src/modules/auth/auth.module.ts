@@ -9,6 +9,7 @@ import { UsersModule } from '../users/users.module';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { TokenHelper } from '../../common/helpers/token.helper';
 import { PasswordHelper } from '../../common/helpers/password.helper';
+import { CookieHelper } from '../../common/helpers/cookie.helper';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { PasswordHelper } from '../../common/helpers/password.helper';
     MikroOrmModule.forFeature([RefreshToken]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, TokenHelper, PasswordHelper],
-  exports: [TokenHelper, PasswordHelper],
+  providers: [AuthService, JwtStrategy, TokenHelper, PasswordHelper, CookieHelper],
+  exports: [TokenHelper, PasswordHelper, CookieHelper],
 })
-export class AuthModule {}
+export class AuthModule { }

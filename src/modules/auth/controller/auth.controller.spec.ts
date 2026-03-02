@@ -1,11 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from '../services/auth.service';
+import { CookieHelper } from '../../../common/helpers/cookie.helper';
 import { ThrottlerGuard } from '@nestjs/throttler';
 
 describe('AuthController', () => {
   let controller: AuthController;
   let service: AuthService;
+  let cookieHelper: CookieHelper;
 
   const mockAuthService = {
     register: jest
@@ -13,21 +15,29 @@ describe('AuthController', () => {
       .mockResolvedValue({ id: '1', email: 'test@test.com', name: 'Test' }),
     login: jest
       .fn()
-      .mockResolvedValue({ accessToken: 'token', refreshToken: 'token' }),
+      .mockResolvedValue({ accessToken: 'token', refreshToken: 'rt-token' }),
     refreshToken: jest
       .fn()
-      .mockResolvedValue({ accessToken: 'newtoken', refreshToken: 'newtoken' }),
+      .mockResolvedValue({ accessToken: 'newtoken', refreshToken: 'new-rt' }),
     logout: jest.fn().mockResolvedValue({ message: 'Logout successful' }),
+  };
+
+  const mockCookieHelper = {
+    setAuthCookies: jest.fn(),
+    clearAuthCookies: jest.fn(),
+  };
+
+  const mockReply = {
+    setCookie: jest.fn(),
+    clearCookie: jest.fn(),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
-        {
-          provide: AuthService,
-          useValue: mockAuthService,
-        },
+        { provide: AuthService, useValue: mockAuthService },
+        { provide: CookieHelper, useValue: mockCookieHelper },
       ],
     })
       .overrideGuard(ThrottlerGuard)
@@ -36,6 +46,7 @@ describe('AuthController', () => {
 
     controller = module.get<AuthController>(AuthController);
     service = module.get<AuthService>(AuthService);
+    cookieHelper = module.get<CookieHelper>(CookieHelper);
   });
 
   afterEach(() => {
@@ -60,20 +71,32 @@ describe('AuthController', () => {
     expect(service.register).toHaveBeenCalledWith(dto);
   });
 
-  it('should login a user with device info', async () => {
+  it('should login, set cookies, and return accessToken', async () => {
     const dto = { email: 'test@test.com', password: 'Password1!' };
     const mockReq = {
       headers: { 'user-agent': 'Mozilla/5.0' },
       ip: '127.0.0.1',
     };
-    expect(await controller.login(dto, mockReq as never)).toEqual({
+
+    const result = await controller.login(
+      dto,
+      mockReq as never,
+      mockReply as never,
+    );
+
+    expect(result).toEqual({ accessToken: 'token' });
+    expect(service.login).toHaveBeenCalledWith(
+      dto,
+      'Mozilla/5.0',
+      '127.0.0.1',
+    );
+    expect(cookieHelper.setAuthCookies).toHaveBeenCalledWith(mockReply, {
       accessToken: 'token',
-      refreshToken: 'token',
+      refreshToken: 'rt-token',
     });
-    expect(service.login).toHaveBeenCalledWith(dto, 'Mozilla/5.0', '127.0.0.1');
   });
 
-  it('should extract x-forwarded-for IP', async () => {
+  it('should extract x-forwarded-for IP on login', async () => {
     const dto = { email: 'test@test.com', password: 'Password1!' };
     const mockReq = {
       headers: {
@@ -82,7 +105,7 @@ describe('AuthController', () => {
       },
       ip: '127.0.0.1',
     };
-    await controller.login(dto, mockReq as never);
+    await controller.login(dto, mockReq as never, mockReply as never);
     expect(service.login).toHaveBeenCalledWith(
       dto,
       'Mozilla/5.0',
@@ -90,28 +113,73 @@ describe('AuthController', () => {
     );
   });
 
-  it('should refresh token with device info', async () => {
-    const dto = { refreshToken: 'token' };
+  it('should refresh token from cookie and set new cookies', async () => {
+    const dto = {};
     const mockReq = {
       headers: { 'user-agent': 'Mozilla/5.0' },
       ip: '127.0.0.1',
+      cookies: { refresh_token: 'cookie-rt' },
     };
-    expect(await controller.refreshToken(dto, mockReq as never)).toEqual({
-      accessToken: 'newtoken',
-      refreshToken: 'newtoken',
-    });
-    expect(service.refreshToken).toHaveBeenCalledWith(
+
+    const result = await controller.refreshToken(
       dto,
+      mockReq as never,
+      mockReply as never,
+    );
+
+    expect(result).toEqual({ accessToken: 'newtoken' });
+    expect(service.refreshToken).toHaveBeenCalledWith(
+      { refreshToken: 'cookie-rt' },
+      'Mozilla/5.0',
+      '127.0.0.1',
+    );
+    expect(cookieHelper.setAuthCookies).toHaveBeenCalledWith(mockReply, {
+      accessToken: 'newtoken',
+      refreshToken: 'new-rt',
+    });
+  });
+
+  it('should refresh token from body when no cookie', async () => {
+    const dto = { refreshToken: 'body-rt' };
+    const mockReq = {
+      headers: { 'user-agent': 'Mozilla/5.0' },
+      ip: '127.0.0.1',
+      cookies: {},
+    };
+
+    await controller.refreshToken(dto, mockReq as never, mockReply as never);
+
+    expect(service.refreshToken).toHaveBeenCalledWith(
+      { refreshToken: 'body-rt' },
       'Mozilla/5.0',
       '127.0.0.1',
     );
   });
 
-  it('should logout a user', async () => {
+  it('should logout, clear cookies, and pass refresh token from cookie', async () => {
     const user = { id: '1' } as never;
-    expect(await controller.logout(user)).toEqual({
-      message: 'Logout successful',
-    });
-    expect(service.logout).toHaveBeenCalledWith('1');
+    const mockReq = {
+      cookies: { refresh_token: 'cookie-rt' },
+    };
+
+    const result = await controller.logout(
+      user,
+      mockReq as never,
+      mockReply as never,
+    );
+
+    expect(result).toEqual({ message: 'Logout successful' });
+    expect(service.logout).toHaveBeenCalledWith('1', 'cookie-rt');
+    expect(cookieHelper.clearAuthCookies).toHaveBeenCalledWith(mockReply);
+  });
+
+  it('should logout without cookie refresh token', async () => {
+    const user = { id: '1' } as never;
+    const mockReq = { cookies: {} };
+
+    await controller.logout(user, mockReq as never, mockReply as never);
+
+    expect(service.logout).toHaveBeenCalledWith('1', undefined);
+    expect(cookieHelper.clearAuthCookies).toHaveBeenCalledWith(mockReply);
   });
 });
