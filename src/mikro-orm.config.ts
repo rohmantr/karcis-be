@@ -9,11 +9,7 @@ import { SeedManager } from '@mikro-orm/seeder';
 const config = envSchema.partial().parse(process.env);
 
 export default defineConfig({
-  host: config.DB_HOST,
-  port: config.DB_PORT,
-  user: config.DB_USERNAME,
-  password: config.DB_PASSWORD,
-  dbName: config.DB_DATABASE,
+  clientUrl: config.DATABASE_URL,
   entities: ['dist/**/*.entity.js'],
   entitiesTs: ['src/**/*.entity.ts'],
   metadataProvider: TsMorphMetadataProvider,
