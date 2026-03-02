@@ -198,6 +198,12 @@ describe('AuthService', () => {
       ).rejects.toThrow(UnauthorizedException);
     });
 
+    it('rejects when refreshToken is missing', async () => {
+      await expect(
+        service.refreshToken({}),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
     it('revokes all sessions on token reuse', async () => {
       tokenHelper.verifyRefreshToken.mockResolvedValue({ sub: 'u-1' });
       refreshRepo.findValidByTokenHash.mockResolvedValue(null);

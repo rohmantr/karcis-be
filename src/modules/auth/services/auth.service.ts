@@ -23,7 +23,7 @@ export class AuthService {
     private readonly em: EntityManager,
     private readonly tokenHelper: TokenHelper,
     private readonly passwordHelper: PasswordHelper,
-  ) {}
+  ) { }
 
   private get userRepository(): UserRepository {
     return this.em.getRepository(User);
@@ -80,6 +80,10 @@ export class AuthService {
     ipAddress?: string,
   ) {
     const { refreshToken } = refreshTokenDto;
+
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token is required');
+    }
 
     try {
       const payload = await this.tokenHelper.verifyRefreshToken(refreshToken);

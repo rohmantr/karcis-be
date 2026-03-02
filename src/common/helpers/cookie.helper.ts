@@ -44,7 +44,11 @@ export class CookieHelper {
 
     parseDurationToMs(duration: string): number {
         const match = duration.match(/^(\d+)([smhd])$/);
-        if (!match) return 15 * 60 * 1000;
+        if (!match) {
+            throw new Error(
+                `Invalid duration format: "${duration}". Expected format: <number><s|m|h|d>`,
+            );
+        }
 
         const value = parseInt(match[1], 10);
         const unit = match[2];

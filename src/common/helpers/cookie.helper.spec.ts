@@ -110,8 +110,10 @@ describe('CookieHelper', () => {
             expect(helper.parseDurationToMs(input)).toBe(expected);
         });
 
-        it('returns default 15min for invalid format', () => {
-            expect(helper.parseDurationToMs('invalid')).toBe(15 * 60 * 1000);
+        it('throws error for invalid format', () => {
+            expect(() => helper.parseDurationToMs('invalid')).toThrow(
+                'Invalid duration format',
+            );
         });
     });
 });
