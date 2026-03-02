@@ -23,7 +23,7 @@ export class AuthService {
     private readonly em: EntityManager,
     private readonly tokenHelper: TokenHelper,
     private readonly passwordHelper: PasswordHelper,
-  ) { }
+  ) {}
 
   private get userRepository(): UserRepository {
     return this.em.getRepository(User);

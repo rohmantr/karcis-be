@@ -7,16 +7,11 @@ export const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
 
   // Database
-  DB_HOST: z.string(),
-  DB_PORT: z.coerce.number().default(5432),
-  DB_USERNAME: z.string(),
-  DB_PASSWORD: z.string(),
-  DB_DATABASE: z.string(),
+  DATABASE_URL: z.string(),
+  DIRECT_URL: z.string(),
 
   // Redis
-  REDIS_HOST: z.string().optional(),
-  REDIS_PORT: z.coerce.number().optional().default(6379),
-  REDIS_PASSWORD: z.string().optional(),
+  REDIS_URL: z.string(),
 
   // JWT
   JWT_ACCESS_SECRET: z.string(),

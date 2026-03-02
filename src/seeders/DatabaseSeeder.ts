@@ -27,7 +27,6 @@ export class DatabaseSeeder extends Seeder {
       isActive: true,
     });
 
-    // Create Events
     const event1 = em.create(Event, {
       title: 'Jakarta Music Festival 2026',
       artistName: 'Various Artists',
