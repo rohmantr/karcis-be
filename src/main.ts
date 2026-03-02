@@ -8,13 +8,14 @@ import {
 } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from '@fastify/helmet';
+import cookie from '@fastify/cookie';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
 async function bootstrap() {
   Sentry.init({
-    dsn: process.env.SENTRY_DSN || '',
+    dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV,
     integrations: [nodeProfilingIntegration()],
     tracesSampleRate: 1.0,
@@ -27,7 +28,13 @@ async function bootstrap() {
   );
 
   await app.register(helmet);
-  app.enableCors();
+  await app.register(cookie, {
+    secret: process.env.COOKIE_SECRET,
+  });
+  app.enableCors({
+    origin: ['https://v0-karcis-fe.vercel.app', 'http://localhost:5000'],
+    credentials: true,
+  });
 
   app.setGlobalPrefix('api');
   app.enableVersioning({
